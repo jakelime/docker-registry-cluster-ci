@@ -1,0 +1,76 @@
+services:
+  # Service 1: The Docker Registry
+  registry:
+    restart: unless-stopped
+    container_name: ${PROJECT_NAME}_dkreg
+    build:
+      context: ./src-registry
+      args:
+        url_docker: ${url_docker_index}
+        REGISTRY_STORAGE_DIR: /var/lib/registry
+    ports:
+      - "${DOCKER_REGISTRY_PORT}:5000" # Exposed to host as requested
+    environment:
+      # Storage location inside container
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
+      # CORS Configuration (REQUIRED for the UI to talk to the Registry)
+      REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_ALLOW_ORIGIN: "http://${HOSTNAME}"
+      REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_ALLOW_METHODS: "HEAD,GET,OPTIONS,DELETE"
+      REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_ALLOW_HEADERS: "Authorization,Accept,Cache-Control"
+      REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_EXPOSE_HEADERS: "Docker-Content-Digest"
+    volumes:
+      - datashare:/datashare
+    networks:
+      - appnet
+  # Service 2: The Registry UI
+  registry-ui:
+    image: ${url_docker_index}/joxit/docker-registry-ui:2.6.0-debian
+    container_name: ${PROJECT_NAME}_dkreg_ui
+    restart: unless-stopped
+    environment:
+      - SINGLE_REGISTRY=true
+      # This points to the browser-accessible URL of the registry
+      - REGISTRY_URL=http://${HOSTNAME}:5000
+      - DELETE_IMAGES=true
+      - REGISTRY_TITLE=JetforgeDockerRegistry
+    networks:
+      - appnet
+  # Service 3: Nginx Reverse Proxy
+  nginx:
+    restart: unless-stopped
+    container_name: ${PROJECT_NAME}_nginx
+    build:
+      context: ./src-nginx
+      args:
+        url_docker: ${url_docker_index}
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
+      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+      - SHARED_DATA_DIR=${SHARED_DATA_DIR}
+      - NGINX_LOG_FOLDER=${SHARED_LOGS_DIR}/nginx/
+      - NGINX_STATIC_FOLDER=${SHARED_DATA_DIR}/www/static/
+      - NGINX_MEDIA_FOLDER=${SHARED_DATA_DIR}/www/media/
+      - NGINX_PORT_HTTP=${NGINX_PORT_HTTP}
+      - NGINX_PORT_HTTPS=${NGINX_PORT_HTTPS}
+    ports:
+      - "${NGINX_PORT_HTTP}:${NGINX_PORT_HTTP}"
+      - "${NGINX_PORT_HTTPS}:${NGINX_PORT_HTTPS}"
+    volumes:
+      - ./src-nginx/templates:/etc/nginx/templates
+      - datashare:/datashare
+      - applogs:/applogs
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - appnet
+    depends_on:
+      - registry-ui
+
+volumes:
+  datashare:
+  applogs:
+  nginx_cache:
+
+
+networks:
+  appnet:
