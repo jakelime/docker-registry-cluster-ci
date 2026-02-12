@@ -1,0 +1,33 @@
+services:
+  dk_registry:
+    container_name: ${PROJECT_NAME}_dk_registry
+    image: registry:2.7
+    ports:
+      - "10500:5000"
+    environment:
+      - REGISTRY_HTTP_SECRET=${REGISTRY_HTTP_SECRET}
+    volumes:
+      - ./registry-data:/var/lib/registry
+    networks:
+      - appnet
+
+  dk_registry_ui:
+    container_name: ${PROJECT_NAME}_dk_registry_ui
+    image: joxit/docker-registry-ui:2.6
+    environment:
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE="MyPrivateRegistry"
+      # - REGISTRY_URL=http://localhost:34000
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/fullchain.pem:/etc/nginx/certs/fullchain.pem
+      - ./nginx/privkey.pem:/etc/nginx/certs/privkey.pem
+    ports:
+      - 443:443
+    depends_on:
+      - dk_registry
+    networks:
+      - appnet
+
+networks:
+  appnet:
