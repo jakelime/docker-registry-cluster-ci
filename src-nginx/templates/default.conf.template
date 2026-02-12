@@ -8,7 +8,7 @@ server {
     # Resolver is required to point to Docker internal DNS
     resolver 127.0.0.11 valid=30s;
 
-    location /docker-registry/ {
+    location / {
         # The trailing slash is important!
         # It strips '/docker-registry/' before passing to the backend.
         proxy_pass http://registry-ui:80/;

@@ -14,7 +14,7 @@ services:
       # Storage location inside container
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
       # CORS Configuration (REQUIRED for the UI to talk to the Registry)
-      REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_ALLOW_ORIGIN: "http://${HOSTNAME}"
+      REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_ALLOW_ORIGIN: "http://localhost"
       REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_ALLOW_METHODS: "HEAD,GET,OPTIONS,DELETE"
       REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_ALLOW_HEADERS: "Authorization,Accept,Cache-Control"
       REGISTRY_HTTP_HEADERS_ACCESS_CONTROL_EXPOSE_HEADERS: "Docker-Content-Digest"
@@ -27,10 +27,12 @@ services:
     image: ${url_docker_index}/joxit/docker-registry-ui:2.6.0-debian
     container_name: ${PROJECT_NAME}_dkreg_ui
     restart: unless-stopped
+    ports:
+      - 80:80
     environment:
       - SINGLE_REGISTRY=true
       # This points to the browser-accessible URL of the registry
-      - REGISTRY_URL=http://${HOSTNAME}:5000
+      - REGISTRY_URL=http://localhost:${DOCKER_REGISTRY_PORT}
       - DELETE_IMAGES=true
       - REGISTRY_TITLE=JetforgeDockerRegistry
     networks:
