@@ -1,20 +1,32 @@
 services:
   dk_registry:
     container_name: ${PROJECT_NAME}_dk_registry
-    image: ${url_docker_index}/registry:2.7
+    build:
+      context: ./src-registry
+      args:
+        url_docker: ${url_docker_index}
+        PERSISTANCE_STORAGE: /datashare/docker-registry
     environment:
       - REGISTRY_HTTP_SECRET=${DOCKER_REGISTRY_HTTP_SECRET:-6e271f338b1d9b3bcd58e934463304596a6b6cb5af8ed9b30c1174e0a3a0185c}
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
     volumes:
-      - ./registry-data:/var/lib/registry
+      - datashare:/datashare
     networks:
       - appnet
 
   dk_registry_ui:
     container_name: ${PROJECT_NAME}_dk_registry_ui
-    image: ${url_docker_index}/joxit/docker-registry-ui:2.6
+    image: ${url_docker_index}/joxit/docker-registry-ui:latest
     environment:
       - SINGLE_REGISTRY=true
-      - REGISTRY_TITLE="JetforgeDockerRegistry"
+      - REGISTRY_TITLE=${DOCKER_REGISTRY_TITLE}
+      - DELETE_IMAGES=true
+      - CATALOG_ELEMENTS_LIMIT=1000
+      - TAGLIST_PAGE_SIZE=100
+      - CATALOG_MAX_BRANCHES=1
+      - CATALOG_MIN_BRANCHES=1
+      - SHOW_CATALOG_NB_TAGS=true
+      - SHOW_CONTENT_DIGEST=true
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./nginx/fullchain.pem:/etc/nginx/certs/fullchain.pem
@@ -26,5 +38,10 @@ services:
     networks:
       - appnet
 
+volumes:
+  datashare:
+
+
 networks:
   appnet:
+  datashare:

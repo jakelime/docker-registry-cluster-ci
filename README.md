@@ -27,6 +27,10 @@ docker pull hello-world # pull from docker.io official registry
 docker tag hello-world localhost:10500/hello-world # tagging your local image pulled
 docker push localhost:10500/hello-world # push to the self-hosted docker registry
 
+docker pull busybox # pull from docker.io official registry
+docker tag busybox localhost:10500/busybox # tagging your local image pulled
+docker push localhost:10500/busybox # push to the self-hosted docker registry
+
 # If you want to default to 443, you may change to `DOCKER_REGISTRY_PORT=443`
 ## If you running a single server on single host, this is nice
 docker pull alpine
@@ -57,3 +61,15 @@ python -c "import secrets, string; alph = string.ascii_letters + string.digit
 ```bash
 docker compose run --rm --entrypoint /bin/sh nginx
 ```
+
+### Garbage collection for Deleted images
+
+```bash
+container_name=${PROJECT_NAME:-dkcl}_dk_registry
+docker exec $container_name registry garbage-collect /etc/docker/registry/config.yml
+```
+
+## Todo
+
+- deleting images
+  - did not manage to fix the delete images and cleanup. ohwells, leave it as it is then.
