@@ -1,10 +1,10 @@
 services:
   dk_registry:
-    container_name: ${PROJECT_NAME}_dk_registry
+    container_name: ${PROJECT_NAME:-prj}_dk_registry
     build:
       context: ./src-registry
       args:
-        url_docker: ${url_docker_index}
+        url_docker: ${url_docker_index:-docker.io}
         PERSISTANCE_STORAGE: /datashare/docker-registry
     environment:
       - REGISTRY_HTTP_SECRET=${DOCKER_REGISTRY_HTTP_SECRET:-6e271f338b1d9b3bcd58e934463304596a6b6cb5af8ed9b30c1174e0a3a0185c}
@@ -14,12 +14,15 @@ services:
     networks:
       - appnet
 
-  dk_registry_ui:
-    container_name: ${PROJECT_NAME}_dk_registry_ui
-    image: ${url_docker_index}/joxit/docker-registry-ui:latest
+  dk_registryui:
+    container_name: ${PROJECT_NAME:-prj}_dk_registry_ui
+    build:
+      context: ./src-registryui
+      args:
+        url_docker: ${url_docker_index:-docker.io}
     environment:
+      - REGISTRY_TITLE=${DOCKER_REGISTRY_TITLE:-MyDkReg}
       - SINGLE_REGISTRY=true
-      - REGISTRY_TITLE=${DOCKER_REGISTRY_TITLE}
       - DELETE_IMAGES=true
       - CATALOG_ELEMENTS_LIMIT=1000
       - TAGLIST_PAGE_SIZE=100
@@ -28,11 +31,10 @@ services:
       - SHOW_CATALOG_NB_TAGS=true
       - SHOW_CONTENT_DIGEST=true
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/fullchain.pem:/etc/nginx/certs/fullchain.pem
-      - ./nginx/privkey.pem:/etc/nginx/certs/privkey.pem
+      - ./src-registryui/certs/fullchain.pem:/etc/nginx/certs/fullchain.pem
+      - ./src-registryui/certs/privkey.pem:/etc/nginx/certs/privkey.pem
     ports:
-      - "${DOCKER_REGISTRY_PORT}:443"
+      - "${DOCKER_REGISTRY_PORT:-443}:443"
     depends_on:
       - dk_registry
     networks:

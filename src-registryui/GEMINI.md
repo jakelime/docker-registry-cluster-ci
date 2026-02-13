@@ -1,4 +1,4 @@
-# Component: Nginx Reverse Proxy
+# Component: Docker Registry UI front by NGINX
 
 ## Purpose
 
